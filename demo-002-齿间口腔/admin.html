@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>预约管理 · 齿间口腔后台｜作品集演示</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="demo-bar">
+  <div class="wrap">
+    <span>作品集演示 · 后台 · 数据存在本机浏览器</span>
+    <span>
+      <a href="index.html">① 官网</a> ·
+      <a href="admin.html">② 后台</a> ·
+      <a href="dashboard.html">③ 数据看板</a>
+    </span>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="logo-mark">齿</span> 齿间口腔</div>
+    <a class="on" href="admin.html">预约管理</a>
+    <a href="dashboard.html">数据看板</a>
+    <a href="index.html">返回官网</a>
+    <div class="foot">演示数据，可任意增删<br>刷新不会丢（本机保存）</div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div>
+        <h1>预约管理</h1>
+        <div class="sub">官网提交的线索会直接落到这里</div>
+      </div>
+      <div class="toolbar" style="margin:0">
+        <button class="tbtn" id="btnExport">导出 CSV</button>
+        <button class="tbtn" id="btnReset">重置演示数据</button>
+        <button class="tbtn primary" id="btnAdd">+ 新增预约</button>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="toolbar">
+      <input id="q" placeholder="搜 姓名 / 手机 / 项目" style="min-width:220px">
+      <select id="fStatus">
+        <option value="">全部状态</option>
+        <option value="new">待跟进</option>
+        <option value="doing">已联系</option>
+        <option value="done">已成交</option>
+        <option value="lost">已流失</option>
+      </select>
+      <select id="fChannel">
+        <option value="">全部渠道</option>
+      </select>
+      <span class="sp"></span>
+      <span class="sub" id="count"></span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:96px">编号</th>
+          <th style="width:104px">日期</th>
+          <th>客户</th>
+          <th style="width:132px">手机</th>
+          <th>意向项目</th>
+          <th style="width:112px">预估客单</th>
+          <th style="width:88px">渠道</th>
+          <th style="width:96px">状态</th>
+          <th style="width:120px">操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">没有匹配的记录</div>
+  </main>
+</div>
+
+<div class="mask" id="mask">
+  <div class="modal">
+    <h2 id="mTitle">新增预约</h2>
+    <form id="mForm">
+      <div class="grid2">
+        <div class="field"><label>称呼</label><input name="name" required placeholder="王先生"></div>
+        <div class="field"><label>手机号</label><input name="phone" required placeholder="13800000000" inputmode="numeric"></div>
+        <div class="field"><label>意向项目</label><input name="community" required placeholder="种植牙"></div>
+        <div class="field"><label>预估客单（元）</label><input name="budget" type="number" step="100" required placeholder="6800"></div>
+        <div class="field"><label>渠道</label><select name="channel" id="mChannel"></select></div>
+        <div class="field"><label>状态</label><select name="status" id="mStatus"></select></div>
+        <div class="field full"><label>备注</label><textarea name="note" rows="2"></textarea></div>
+      </div>
+      <div class="acts">
+        <button type="button" class="tbtn" id="mCancel">取消</button>
+        <button type="submit" class="tbtn primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+  let editingId = null;
+
+  // 初始化下拉
+  const chSel = document.getElementById('fChannel');
+  const mCh = document.getElementById('mChannel');
+  const mSt = document.getElementById('mStatus');
+  CHANNELS.concat(['官网']).forEach(c => {
+    chSel.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`);
+    mCh.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`);
+  });
+  Object.entries(STATUS).forEach(([k, v]) => {
+    mSt.insertAdjacentHTML('beforeend', `<option value="${k}">${v.label}</option>`);
+  });
+
+  function filtered() {
+    const q = document.getElementById('q').value.trim();
+    const fs = document.getElementById('fStatus').value;
+    const fc = document.getElementById('fChannel').value;
+    return Store.all().filter(r => {
+      if (fs && r.status !== fs) return false;
+      if (fc && r.channel !== fc) return false;
+      if (q && !(r.name.includes(q) || r.phone.includes(q) || r.community.includes(q))) return false;
+      return true;
+    });
+  }
+
+  function renderKpis() {
+    const all = Store.all();
+    const today = all.filter(r => r.date === todayStr()).length;
+    const pending = all.filter(r => r.status === 'new').length;
+    const done = all.filter(r => r.status === 'done');
+    const pipeline = done.reduce((s, r) => s + r.budget, 0);
+    document.getElementById('kpis').innerHTML = `
+      <div class="kpi"><div class="k">今日新增</div><div class="v">${today}</div><div class="d">来自官网 / 渠道</div></div>
+      <div class="kpi"><div class="k">待跟进</div><div class="v">${pending}</div><div class="d down">超过 1 天没联系会变红</div></div>
+      <div class="kpi"><div class="k">已成交</div><div class="v">${done.length}</div><div class="d">累计 ${fmtWan(pipeline)}</div></div>
+      <div class="kpi"><div class="k">总线索</div><div class="v">${all.length}</div><div class="d">全周期</div></div>`;
+  }
+
+  function render() {
+    const rows = filtered();
+    const tb = document.getElementById('tbody');
+    document.getElementById('count').textContent = `共 ${rows.length} 条`;
+    document.getElementById('empty').style.display = rows.length ? 'none' : 'block';
+    tb.innerHTML = rows.map(r => {
+      const st = STATUS[r.status] || STATUS.new;
+      return `<tr>
+        <td class="mono">${r.id}</td>
+        <td class="mono">${r.date}</td>
+        <td><b>${r.name}</b></td>
+        <td class="mono">${maskPhone(r.phone)}</td>
+        <td>${r.community}</td>
+        <td class="mono">${fmtWan(r.budget)}</td>
+        <td>${r.channel}</td>
+        <td><span class="pill ${st.cls}">${st.label}</span></td>
+        <td>
+          <button class="linkbtn" data-edit="${r.id}">编辑</button>
+          <button class="linkbtn danger" data-del="${r.id}">删除</button>
+        </td>
+      </tr>`;
+    }).join('');
+    renderKpis();
+  }
+
+  // 事件：筛选
+  ['q', 'fStatus', 'fChannel'].forEach(id => {
+    document.getElementById(id).addEventListener('input', render);
+    document.getElementById(id).addEventListener('change', render);
+  });
+
+  // 编辑 / 删除
+  document.getElementById('tbody').addEventListener('click', e => {
+    const ed = e.target.dataset.edit, dl = e.target.dataset.del;
+    if (ed) openModal(ed);
+    if (dl && confirm('删除这条记录？')) { Store.remove(dl); render(); }
+  });
+
+  // 弹窗
+  const mask = document.getElementById('mask');
+  function openModal(id) {
+    editingId = id || null;
+    const form = document.getElementById('mForm');
+    form.reset();
+    document.getElementById('mTitle').textContent = id ? '编辑预约' : '新增预约';
+    if (id) {
+      const r = Store.all().find(x => x.id === id);
+      if (r) {
+        form.name.value = r.name; form.phone.value = r.phone;
+        form.community.value = r.community; form.budget.value = r.budget;
+        form.channel.value = r.channel; form.status.value = r.status;
+        form.note.value = r.note || '';
+      }
+    }
+    mask.classList.add('on');
+  }
+  document.getElementById('btnAdd').onclick = () => openModal(null);
+  document.getElementById('mCancel').onclick = () => mask.classList.remove('on');
+  mask.addEventListener('click', e => { if (e.target === mask) mask.classList.remove('on'); });
+
+  document.getElementById('mForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const rec = {
+      name: String(f.get('name')).trim(),
+      phone: String(f.get('phone')).trim(),
+      community: String(f.get('community')).trim(),
+      budget: Number(f.get('budget')),
+      channel: f.get('channel'),
+      status: f.get('status'),
+      note: String(f.get('note') || '').trim(),
+    };
+    if (!/^1\d{10}$/.test(rec.phone)) { alert('手机号格式不对'); return; }
+    if (editingId) Store.update(editingId, rec); else Store.add(rec);
+    mask.classList.remove('on');
+    render();
+  });
+
+  // 导出 CSV（带 BOM，Excel 打开不乱码）
+  document.getElementById('btnExport').onclick = () => {
+    const rows = filtered();
+    const head = ['编号', '日期', '称呼', '手机', '小区', '预算', '渠道', '状态', '备注'];
+    const body = rows.map(r => [
+      r.id, r.date, r.name, r.phone, r.community, r.budget, r.channel,
+      (STATUS[r.status] || {}).label || r.status, (r.note || '').replace(/,/g, '，')
+    ]);
+    const csv = '\uFEFF' + [head, ...body].map(a => a.join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = '预约线索_' + todayStr() + '.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  document.getElementById('btnReset').onclick = () => {
+    if (confirm('恢复成初始演示数据？你自己新增的会没。')) { Store.reset(); render(); }
+  };
+
+  render();
+</script>
+</body>
+</html>

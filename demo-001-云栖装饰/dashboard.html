@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>数据看板 · 云栖装饰后台｜作品集演示</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="demo-bar">
+  <div class="wrap">
+    <span>作品集演示 · 数据看板 · 图表为纯 SVG，无外部依赖</span>
+    <span>
+      <a href="index.html">① 官网</a> ·
+      <a href="admin.html">② 后台</a> ·
+      <a href="dashboard.html">③ 数据看板</a>
+    </span>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="logo-mark">云</span> 云栖装饰</div>
+    <a href="admin.html">预约管理</a>
+    <a class="on" href="dashboard.html">数据看板</a>
+    <a href="index.html">返回官网</a>
+    <div class="foot">数字每天自动汇总<br>不用手工做表</div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div>
+        <h1>经营看板</h1>
+        <div class="sub">近 30 天线索与成交</div>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="charts">
+      <div class="panel">
+        <h2>近 14 天线索</h2>
+        <div class="hint">每天官网 + 渠道进来的预约数</div>
+        <div id="lineChart"></div>
+        <div class="legend">
+          <span><i style="background:var(--brand)"></i>线索数</span>
+          <span><i style="background:var(--brand-2)"></i>其中成交</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>线索来源</h2>
+        <div class="hint">哪个渠道值得继续投钱</div>
+        <div id="barChart"></div>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="panel">
+        <h2>转化漏斗</h2>
+        <div class="hint">从留电话到签合同的流失在哪一步</div>
+        <div class="funnel" id="funnel"></div>
+      </div>
+      <div class="panel">
+        <h2>渠道明细</h2>
+        <div class="hint">按线索量排</div>
+        <table style="border:0">
+          <thead><tr><th>渠道</th><th>线索</th><th>成交</th><th>成交率</th></tr></thead>
+          <tbody id="chTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+  const all = Store.all();
+
+  /* ---------- KPI ---------- */
+  const in30 = all; // 演示数据本身就在近 30 天
+  const done = all.filter(r => r.status === 'done');
+  const rate = all.length ? (done.length / all.length * 100) : 0;
+  const avg = all.length ? all.reduce((s, r) => s + r.budget, 0) / all.length : 0;
+  const pending = all.filter(r => r.status === 'new').length;
+
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="k">线索总数</div><div class="v">${in30.length}</div><div class="d">近 30 天</div></div>
+    <div class="kpi"><div class="k">成交</div><div class="v">${done.length}</div><div class="d">成交率 ${rate.toFixed(1)}%</div></div>
+    <div class="kpi"><div class="k">平均预算</div><div class="v">${fmtWan(avg)}</div><div class="d">按线索口径</div></div>
+    <div class="kpi"><div class="k">待跟进</div><div class="v">${pending}</div><div class="d down">这是最容易丢钱的地方</div></div>`;
+
+  /* ---------- 折线图：近 14 天 ---------- */
+  (function () {
+    const days = [];
+    for (let i = 13; i >= 0; i--) days.push(daysAgo(i));
+    const leads = days.map(d => all.filter(r => r.date === d).length);
+    const wins = days.map(d => all.filter(r => r.date === d && r.status === 'done').length);
+
+    const W = 560, H = 200, P = 28;
+    const maxV = Math.max(3, ...leads);
+    const x = i => P + i * (W - P * 2) / (days.length - 1);
+    const y = v => H - P - (v / maxV) * (H - P * 2);
+
+    const path = arr => arr.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+    const area = `${path(leads)} L${x(days.length - 1)},${H - P} L${x(0)},${H - P} Z`;
+
+    const dots = leads.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="var(--brand)"/>`).join('');
+    const grid = [0, .5, 1].map(t => {
+      const yy = y(maxV * t);
+      return `<line x1="${P}" y1="${yy}" x2="${W - P}" y2="${yy}" stroke="#eae5dd" stroke-dasharray="3 4"/>`;
+    }).join('');
+    const labels = days.map((d, i) => i % 2 === 0
+      ? `<text x="${x(i)}" y="${H - 8}" font-size="10" fill="#8b93a0" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+
+    document.getElementById('lineChart').innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+        ${grid}
+        <path d="${area}" fill="var(--brand)" opacity=".08"/>
+        <path d="${path(leads)}" fill="none" stroke="var(--brand)" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="${path(wins)}" fill="none" stroke="var(--brand-2)" stroke-width="2.2" stroke-dasharray="4 3"/>
+        ${dots}${labels}
+      </svg>`;
+  })();
+
+  /* ---------- 柱状图：渠道 ---------- */
+  (function () {
+    const data = CHANNELS.map(c => ({ c, n: all.filter(r => r.channel === c).length }))
+                         .sort((a, b) => b.n - a.n);
+    const max = Math.max(...data.map(d => d.n), 1);
+    document.getElementById('barChart').innerHTML = data.map(d => `
+      <div style="display:grid;grid-template-columns:64px 1fr 34px;align-items:center;gap:10px;margin-bottom:12px;font-size:13px">
+        <span style="color:var(--ink-2)">${d.c}</span>
+        <span style="background:#f1ede6;border-radius:6px;height:12px;overflow:hidden">
+          <span style="display:block;height:100%;width:${d.n / max * 100}%;background:var(--brand);border-radius:6px"></span>
+        </span>
+        <b class="mono" style="text-align:right">${d.n}</b>
+      </div>`).join('');
+  })();
+
+  /* ---------- 漏斗 ---------- */
+  (function () {
+    const total = all.length;
+    const contacted = all.filter(r => r.status !== 'new').length;
+    const visited = all.filter(r => r.status === 'done' || r.status === 'doing').length;
+    const signed = done.length;
+    const rows = [
+      ['留电话', total],
+      ['已联系', contacted],
+      ['到过店', visited],
+      ['签合同', signed],
+    ];
+    document.getElementById('funnel').innerHTML = rows.map(([k, v]) => `
+      <div class="funnel-row">
+        <span style="color:var(--ink-2)">${k}</span>
+        <span class="funnel-bar" style="width:${Math.max(6, v / total * 100)}%"></span>
+        <b class="mono" style="text-align:right">${v}</b>
+      </div>`).join('');
+  })();
+
+  /* ---------- 渠道明细表 ---------- */
+  (function () {
+    const rows = CHANNELS.concat(['官网']).map(c => {
+      const list = all.filter(r => r.channel === c);
+      const win = list.filter(r => r.status === 'done').length;
+      return { c, n: list.length, win, rate: list.length ? win / list.length * 100 : 0 };
+    }).sort((a, b) => b.n - a.n);
+    document.getElementById('chTable').innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.c}</td>
+        <td class="mono">${r.n}</td>
+        <td class="mono">${r.win}</td>
+        <td class="mono">${r.rate.toFixed(0)}%</td>
+      </tr>`).join('');
+  })();
+</script>
+</body>
+</html>

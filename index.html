@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>作品集 · 官网 / 后台 / 数据看板</title>
+<style>
+  :root{--ink:#1b2430;--ink2:#4b5866;--line:#e6e1da;--bg:#faf8f5;--brand:#2f5d50;--brand2:#c2703d}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.65}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px}
+  header{padding:56px 0 28px}
+  .eyebrow{font-size:13px;letter-spacing:.14em;color:var(--brand2);font-weight:600}
+  h1{font-size:34px;margin:12px 0 10px;letter-spacing:-.01em;line-height:1.25}
+  h1 em{font-style:normal;color:var(--brand)}
+  .lead{color:var(--ink2);max-width:32em}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding-bottom:20px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(27,36,48,.05),0 8px 24px rgba(27,36,48,.05)}
+  .card .ph{aspect-ratio:16/10;background:linear-gradient(150deg,#e7ddd0,#cbb9a2)}
+  .card:nth-child(2) .ph{background:linear-gradient(150deg,#dfe8e2,#b9cdc2)}
+  .card .body{padding:18px 20px 22px}
+  .card h2{font-size:18px;margin:0 0 4px}
+  .card p{color:var(--ink2);font-size:14px;margin:0 0 14px}
+  .links{display:flex;gap:10px;flex-wrap:wrap}
+  .links a{font-size:13.5px;text-decoration:none;padding:7px 13px;border-radius:8px;
+    border:1px solid var(--line);color:var(--ink)}
+  .links a:hover{border-color:var(--ink)}
+  .links a.p{background:var(--ink);color:#fff;border-color:var(--ink)}
+  section{padding:26px 0 10px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .mini{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .mini b{display:block;font-size:15px;margin-bottom:4px}
+  .mini span{font-size:13px;color:var(--ink2)}
+  .note{margin:26px 0 60px;padding:16px 18px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;font-size:13.5px;color:var(--ink2)}
+  @media (max-width:720px){.cards,.grid3{grid-template-columns:1fr}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">作品集 · 2026</div>
+    <h1>我能交付的<em>三样东西</em>：<br>官网、后台、数据看板。</h1>
+    <p class="lead">不是效果图。下面每一套都能点开、能填表、能看到数据。
+      两套是不同行业，证明不是套模板。</p>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <div class="ph"></div>
+      <div class="body">
+        <h2>云栖装饰 · 家装</h2>
+        <p>官网留资 → 线索自动进后台 → 看板看渠道转化</p>
+        <div class="links">
+          <a class="p" href="demo-001-云栖装饰/index.html">官网</a>
+          <a href="demo-001-云栖装饰/admin.html">后台</a>
+          <a href="demo-001-云栖装饰/dashboard.html">看板</a>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ph"></div>
+      <div class="body">
+        <h2>齿间口腔 · 诊所</h2>
+        <p>同一套骨架，换了行业和字段，40 分钟换完</p>
+        <div class="links">
+          <a class="p" href="demo-002-齿间口腔/index.html">官网</a>
+          <a href="demo-002-齿间口腔/admin.html">后台</a>
+          <a href="demo-002-齿间口腔/dashboard.html">看板</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="grid3">
+      <div class="mini"><b>手机能看</b><span>不是只在电脑上好看，手机上不串版</span></div>
+      <div class="mini"><b>表单能用</b><span>客户填完，后台立刻出现，还能导出 Excel</span></div>
+      <div class="mini"><b>源码给你</b><span>纯静态零依赖，传到你自己空间就能上线</span></div>
+    </div>
+  </section>
+
+  <div class="note">
+    演示数据是虚构的，存在浏览器本地，刷新不会丢、换设备会回到初始样例。
+    <br>真实上线会接数据库，这部分在报价里另算。
+  </div>
+</div>
+</body>
+</html>

@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>作品集 · 官网 / 后台 / 数据看板</title>
+<meta name="description" content="成都，做官网、后台和数据看板。不是效果图：每一套都能点开、能填表、能看到数据。手机适配，源码交付，5–8 天，先体检再决定做不做。">
+<meta property="og:title" content="作品集 · 官网 / 后台 / 数据看板">
+<meta property="og:description" content="每一套都能点开、能填表、能看到数据。手机适配，源码交付。">
+<meta property="og:type" content="website">
 <style>
   :root{--ink:#1b2430;--ink2:#4b5866;--line:#e6e1da;--bg:#faf8f5;--brand:#2f5d50;--brand2:#c2703d}
   *{box-sizing:border-box}
@@ -19,6 +23,7 @@
   .card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;
     box-shadow:0 1px 2px rgba(27,36,48,.05),0 8px 24px rgba(27,36,48,.05)}
   .card .ph{aspect-ratio:16/10;background:linear-gradient(150deg,#e7ddd0,#cbb9a2)}
+  .card .ph img{width:100%;height:100%;object-fit:cover;display:block}
   .card:nth-child(2) .ph{background:linear-gradient(150deg,#dfe8e2,#b9cdc2)}
   .card .body{padding:18px 20px 22px}
   .card h2{font-size:18px;margin:0 0 4px}
@@ -49,7 +54,7 @@
 
   <div class="cards">
     <div class="card">
-      <div class="ph"></div>
+      <div class="ph"><img src="thumb-001.png" alt="云栖装饰官网首页"></div>
       <div class="body">
         <h2>云栖装饰 · 家装</h2>
         <p>官网留资 → 线索自动进后台 → 看板看渠道转化</p>
@@ -61,7 +66,7 @@
       </div>
     </div>
     <div class="card">
-      <div class="ph"></div>
+      <div class="ph"><img src="thumb-002.png" alt="齿间口腔官网首页"></div>
       <div class="body">
         <h2>齿间口腔 · 诊所</h2>
         <p>同一套骨架，换了行业和字段，40 分钟换完</p>
@@ -82,10 +87,41 @@
     </div>
   </section>
 
+  <section>
+    <div class="mini" style="padding:22px 22px">
+      <b style="font-size:17px">先看你的站漏在哪</b>
+      <span>留个联系方式，把域名发我，二十四小时内给你一页体检报告。改不改，你自己定。</span>
+      <form id="lead" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+        <input name="contact" placeholder="手机号或微信" required
+          style="flex:1 1 180px;padding:11px 13px;border:1px solid var(--line);border-radius:8px;font-size:14px">
+        <input name="site" placeholder="你的域名（没有就留空）"
+          style="flex:1 1 180px;padding:11px 13px;border:1px solid var(--line);border-radius:8px;font-size:14px">
+        <button type="submit"
+          style="padding:11px 20px;border:0;border-radius:8px;background:var(--ink);color:#fff;font-size:14px;cursor:pointer">发给我</button>
+      </form>
+      <div id="lead-msg" style="margin-top:10px;font-size:13px;color:var(--brand)"></div>
+    </div>
+  </section>
+
   <div class="note">
     演示数据是虚构的，存在浏览器本地，刷新不会丢、换设备会回到初始样例。
     <br>真实上线会接数据库，这部分在报价里另算。
   </div>
 </div>
+<script>
+  document.getElementById('lead').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var f = e.target;
+    var rec = { contact: f.contact.value, site: f.site.value, at: new Date().toISOString() };
+    try {
+      var all = JSON.parse(localStorage.getItem('demo_leads') || '[]');
+      all.push(rec);
+      localStorage.setItem('demo_leads', JSON.stringify(all));
+    } catch (err) {}
+    document.getElementById('lead-msg').textContent =
+      '收到了。演示版这里只存在浏览器里，真实上线会直接进你的后台。';
+    f.reset();
+  });
+</script>
 </body>
 </html>
